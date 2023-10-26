@@ -1,8 +1,9 @@
 #!/bin/bash
 
 IMG_NAME="mana-kadai"
-if [ $(/usr/bin/docker images $IMG_NAME | wc -l) -eq 1 ]; then
-	/usr/bin/docker build -t $IMG_NAME .
+PROG_LOC="/opt/mana-kadai"
+if [ $(docker images $IMG_NAME | wc -l) -eq 1 ]; then
+	docker build -t $IMG_NAME .
 fi
 
-/usr/bin/docker run --rm --env-file "$(pwd)/.env" -it "$IMG_NAME"
+docker run --rm --env-file "$PROG_LOC/.env" -it "$IMG_NAME"
