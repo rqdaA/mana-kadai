@@ -13,7 +13,9 @@ MANADA_PWD = os.getenv("MANADA_PWD", "")
 AUTH_URL = os.getenv("AUTH_URL", "")
 MANAADA_URL = os.getenv("MANADA_URL", "")
 
-if all([e for e in (TOKEN, CHANNEL, MANADA_USER, MANADA_PWD, AUTH_URL, MANAADA_URL)]):
+if not all(
+    [e for e in (TOKEN, CHANNEL, MANADA_USER, MANADA_PWD, AUTH_URL, MANAADA_URL)]
+):
     print("Not all variables are set")
     exit(1)
 
