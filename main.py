@@ -8,8 +8,15 @@ from html import unescape
 
 TOKEN = os.getenv("BOT_TOKEN", "")
 CHANNEL = int(os.getenv("CHANNEL", ""))
-MANABA_USER = os.getenv("MANABA_USER")
-MANABA_PWD = os.getenv("MANABA_PWD")
+MANADA_USER = os.getenv("MANADA_USER", "")
+MANADA_PWD = os.getenv("MANADA_PWD", "")
+AUTH_URL = os.getenv("AUTH_URL", "")
+MANAADA_URL = os.getenv("MANADA_URL", "")
+
+if all([e for e in (TOKEN, CHANNEL, MANADA_USER, MANADA_PWD, AUTH_URL, MANAADA_URL)]):
+    print("Not all variables are set")
+    exit(1)
+
 HIGH_PRI = 0xFF0000
 MEDIUM_PRI = 0xF58216
 UA = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"
@@ -22,7 +29,7 @@ def get_shib() -> dict[str, str]:
         "User-Agent": UA,
     }
 
-    r = s.get("https://manaba.tsukuba.ac.jp/ct/home", headers=headers)
+    r = s.get(f"{MANADA_URL}/ct/home", headers=headers)
 
     headers = {
         "User-Agent": UA,
@@ -41,7 +48,7 @@ def get_shib() -> dict[str, str]:
     }
 
     r = s.post(
-        "https://idp.account.tsukuba.ac.jp/idp/profile/SAML2/Redirect/SSO?execution=e1s1",
+        f"{MANADA_URL}?execution=e1s1",
         headers=headers,
         data=data,
     )
@@ -49,13 +56,13 @@ def get_shib() -> dict[str, str]:
     ######
 
     data = {
-        "j_username": MANABA_USER,
-        "j_password": MANABA_PWD,
+        "j_username": MANADA_USER,
+        "j_password": MANADA_PWD,
         "_eventId_proceed": "",
     }
 
     r = s.post(
-        "https://idp.account.tsukuba.ac.jp/idp/profile/SAML2/Redirect/SSO?execution=e1s2",
+        f"{AUTH_URL}?execution=e1s2",
         headers=headers,
         data=data,
     )
@@ -69,7 +76,7 @@ def get_shib() -> dict[str, str]:
     }
 
     r = s.post(
-        "https://idp.account.tsukuba.ac.jp/idp/profile/SAML2/Redirect/SSO?execution=e1s3",
+        f"{AUTH_URL}?execution=e1s3",
         headers=headers,
         data=data,
     )
@@ -81,7 +88,7 @@ def get_shib() -> dict[str, str]:
     data = {"RelayState": unescape(relay_state), "SAMLResponse": saml}
 
     r = s.post(
-        "https://manaba.tsukuba.ac.jp/Shibboleth.sso/SAML2/POST",
+        f"{MANADA_URL}/Shibboleth.sso/SAML2/POST",
         headers=headers,
         data=data,
     )
@@ -97,7 +104,7 @@ def get_messages() -> list[discord.Embed]:
     cookies = get_shib()
 
     r = requests.get(
-        "https://manaba.tsukuba.ac.jp/ct/home_library_query",
+        f"{MANADA_URL}/ct/home_library_query",
         cookies=cookies,
         headers=headers,
     )
@@ -123,7 +130,7 @@ def get_messages() -> list[discord.Embed]:
         if not url_name or not course:
             continue
 
-        url = "https://manaba.tsukuba.ac.jp/ct/" + url_name.group(1)
+        url = f"{MANADA_URL}/ct/" + url_name.group(1)
         name = url_name.group(2).replace("amp;", "")
         description = "コース: " + course.group(1).replace("amp;", "")
         description += "\n締切: " + due[1]
