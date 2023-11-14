@@ -11,10 +11,10 @@ CHANNEL = int(os.getenv("CHANNEL", ""))
 MANADA_USER = os.getenv("MANADA_USER", "")
 MANADA_PWD = os.getenv("MANADA_PWD", "")
 AUTH_URL = os.getenv("AUTH_URL", "")
-MANAADA_URL = os.getenv("MANADA_URL", "")
+MANADA_URL = os.getenv("MANADA_URL", "")
 
 if not all(
-    [e for e in (TOKEN, CHANNEL, MANADA_USER, MANADA_PWD, AUTH_URL, MANAADA_URL)]
+    [e for e in (TOKEN, CHANNEL, MANADA_USER, MANADA_PWD, AUTH_URL, MANADA_URL)]
 ):
     print("Not all variables are set")
     exit(1)
@@ -50,7 +50,7 @@ def get_shib() -> dict[str, str]:
     }
 
     r = s.post(
-        f"{MANADA_URL}?execution=e1s1",
+        f"{AUTH_URL}?execution=e1s1",
         headers=headers,
         data=data,
     )
