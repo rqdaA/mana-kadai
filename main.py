@@ -3,6 +3,7 @@ import re
 import discord
 import logging
 import os
+import traceback
 from datetime import datetime, timedelta
 from html import unescape
 
@@ -146,18 +147,24 @@ def get_messages() -> list[discord.Embed]:
     return res
 
 
-def send_msg(msgs: list[discord.Embed]):
+def send_msg(msgs: list[discord.Embed] | str):
     client = discord.Client(intents=discord.Intents.default())
-    log = logging.Logger("mana-bot")
 
     @client.event
     async def on_ready():
-        for msg in msgs:
-            await client.get_channel(CHANNEL).send(embed=msg)
+        if type(msgs) is str:
+            await client.get_channel(CHANNEL).send(f'```\n{msgs}\n```')
+        else:
+            for msg in msgs:
+                await client.get_channel(CHANNEL).send(embed=msg)
         await client.close()
 
     client.run(TOKEN)
 
 
 if __name__ == "__main__":
-    send_msg(get_messages())
+    try:
+        msg = get_messages()
+        send_msg(msg)
+    except Exception:
+        send_msg(traceback.format_exc())
