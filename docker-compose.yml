@@ -1,0 +1,11 @@
+version: "2"
+services:
+  mana-kadai:
+    build: .
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - CHANNEL=${CHANNEL}
+      - MANADA_USER=${MANADA_USER}
+      - MANADA_PWD=${MANADA_PWD}
+      - MANADA_URL=${MANADA_URL}
+      - AUTH_URL=${AUTH_URL}

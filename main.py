@@ -1,7 +1,6 @@
 import requests
 import re
 import discord
-import logging
 import os
 import traceback
 from datetime import datetime, timedelta
@@ -22,6 +21,10 @@ if not all(
 
 HIGH_PRI = 0xFF0000
 MEDIUM_PRI = 0xF58216
+LOW_PRI = 0x86DC3D
+NO_TASK = 0x33FC7FF
+DUE_FORMAT = "%Y-%m-%d %H:%M"
+COLOR_LIST = [0x000000, HIGH_PRI, MEDIUM_PRI, LOW_PRI]
 UA = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"
 
 
@@ -116,15 +119,21 @@ def get_messages() -> list[discord.Embed]:
     for e in r.text.split("myassignments-title")[1:]:
         due = re.findall(r'td-period">(.*)</td>', e)
         priority = 0
-        if due and len(due) >= 2 and due[1].startswith("202"):
-            today = datetime.today()
-            tomorrow = today + timedelta(days=1)
-            if due[1].startswith(today.strftime("%Y-%m-%d")):
-                priority = 1
-            elif due[1].startswith(tomorrow.strftime("%Y-%m-%d")):
-                priority = 2
-            else:
-                continue
+        if not (due and len(due) >= 2 and due[1].startswith("202")):
+            continue
+        due = datetime.strptime(due[1], DUE_FORMAT)
+        due_remain = due - datetime.today()
+
+        # overdue check
+        if due_remain < timedelta(days=0):
+            continue
+
+        if due_remain < timedelta(days=1):
+            priority = 1
+        elif due_remain < timedelta(days=2):
+            priority = 2
+        elif due_remain < timedelta(days=3):
+            priority = 3
         else:
             continue
 
@@ -136,27 +145,32 @@ def get_messages() -> list[discord.Embed]:
         url = f"{MANADA_URL}/ct/" + url_name.group(1)
         name = url_name.group(2).replace("amp;", "")
         description = "コース: " + course.group(1).replace("amp;", "")
-        description += "\n締切: " + due[1]
-        color = [0x000000, HIGH_PRI, MEDIUM_PRI][priority]
+        description += "\n締切: " + due.strftime(DUE_FORMAT)
+        color = COLOR_LIST[priority]
         embed = discord.Embed(title=name, url=url, color=color)
         embed.add_field(
             name="コース", value=course.group(1).replace("amp;", ""), inline=False
         )
-        embed.add_field(name="締切", value=due[1], inline=False)
+        embed.add_field(name="締切", value=due.strftime(DUE_FORMAT), inline=True)
+        embed.add_field(
+            name="残り時間",
+            value=f"{due_remain.seconds // (60 * 60)}h {due_remain.seconds // 60 % 60}m",
+            inline=True,
+        )
         res.append(embed)
+    if res is None:
+        embed = discord.Embed(title="直近の課題なし", color=NO_TASK)
+        res.append()
     return res
 
 
-def send_msg(msgs: list[discord.Embed] | str):
+def send_msg(msgs: list[discord.Embed]):
     client = discord.Client(intents=discord.Intents.default())
 
     @client.event
     async def on_ready():
-        if type(msgs) is str:
-            await client.get_channel(CHANNEL).send(f'```\n{msgs}\n```')
-        else:
-            for msg in msgs:
-                await client.get_channel(CHANNEL).send(embed=msg)
+        for msg in msgs:
+            await client.get_channel(CHANNEL).send(embed=msg)
         await client.close()
 
     client.run(TOKEN)
