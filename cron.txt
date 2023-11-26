@@ -1,1 +1,1 @@
-0 9,18 * * * /opt/mana-kadai/run.sh 
+0 9,12,18 * * * docker compose up --build && docker compose down
