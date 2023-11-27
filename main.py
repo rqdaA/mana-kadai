@@ -154,7 +154,7 @@ def get_messages() -> list[discord.Embed]:
         embed.add_field(name="締切", value=due.strftime(DUE_FORMAT), inline=True)
         embed.add_field(
             name="残り時間",
-            value=f"{due_remain.seconds // (60 * 60)}h {due_remain.seconds // 60 % 60}m",
+            value=f"{due_remain.days}d {due_remain.seconds // (60 * 60)}h {due_remain.seconds // 60 % 60}m",
             inline=True,
         )
         res.append(embed)
@@ -176,9 +176,20 @@ def send_msg(msgs: list[discord.Embed]):
     client.run(TOKEN)
 
 
+def send_err(msg: str):
+    client = discord.Client(intents=discord.Intents.default())
+
+    @client.event
+    async def on_ready():
+        await client.get_channel(CHANNEL).send(msg)
+        await client.close()
+
+    client.run(TOKEN)
+
+
 if __name__ == "__main__":
     try:
         msg = get_messages()
         send_msg(msg)
     except Exception:
-        send_msg(traceback.format_exc())
+        send_err(traceback.format_exc())
