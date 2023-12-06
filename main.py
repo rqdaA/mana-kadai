@@ -2,6 +2,7 @@ import requests
 import re
 import discord
 import os
+import zoneinfo
 import traceback
 from datetime import datetime, timedelta
 from html import unescape
@@ -121,8 +122,8 @@ def get_messages() -> list[discord.Embed]:
         priority = 0
         if not (due and len(due) >= 2 and due[1].startswith("202")):
             continue
-        due = datetime.strptime(due[1], DUE_FORMAT)
-        due_remain = due - datetime.today()
+        due = datetime.strptime(f"{due[1].strip()} +09:00", f"{DUE_FORMAT} %z")
+        due_remain = due - datetime.now(tz=zoneinfo.ZoneInfo("Asia/Tokyo"))
 
         # overdue check
         if due_remain < timedelta(days=0):
@@ -144,8 +145,6 @@ def get_messages() -> list[discord.Embed]:
 
         url = f"{MANADA_URL}/ct/" + url_name.group(1)
         name = url_name.group(2).replace("amp;", "")
-        description = "コース: " + course.group(1).replace("amp;", "")
-        description += "\n締切: " + due.strftime(DUE_FORMAT)
         color = COLOR_LIST[priority]
         embed = discord.Embed(title=name, url=url, color=color)
         embed.add_field(
@@ -158,9 +157,9 @@ def get_messages() -> list[discord.Embed]:
             inline=True,
         )
         res.append(embed)
-    if res is None:
+    if not res:
         embed = discord.Embed(title="直近の課題なし", color=NO_TASK)
-        res.append()
+        res.append(embed)
     return res
 
 
@@ -181,7 +180,7 @@ def send_err(msg: str):
 
     @client.event
     async def on_ready():
-        await client.get_channel(CHANNEL).send(msg)
+        await client.get_channel(CHANNEL).send(f"```{msg}```")
         await client.close()
 
     client.run(TOKEN)
