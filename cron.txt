@@ -1,1 +1,1 @@
-0 9,12,18 * * * cd /opt/mana-kadai/ && docker compose up --build && docker compose down
+0 9,12,18 * * * cd /opt/mana-kadai/ && docker compose down && docker compose up --build && docker compose down
