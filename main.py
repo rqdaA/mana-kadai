@@ -15,7 +15,8 @@ AUTH_URL = os.getenv("AUTH_URL", "")
 MANADA_URL = os.getenv("MANADA_URL", "")
 
 if not all(
-    [e for e in (TOKEN, CHANNEL, MANADA_USER, MANADA_PWD, AUTH_URL, MANADA_URL)]
+    [e for e in (TOKEN, CHANNEL, MANADA_USER,
+                 MANADA_PWD, AUTH_URL, MANADA_URL)]
 ):
     print("Not all variables are set")
     exit(1)
@@ -23,7 +24,7 @@ if not all(
 HIGH_PRI = 0xFF0000
 MEDIUM_PRI = 0xF58216
 LOW_PRI = 0x86DC3D
-NO_TASK = 0x33FC7FF
+NO_TASK = 0x33C7FF
 DUE_FORMAT = "%Y-%m-%d %H:%M"
 COLOR_LIST = [0x000000, HIGH_PRI, MEDIUM_PRI, LOW_PRI]
 UA = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"
@@ -88,7 +89,8 @@ def get_shib() -> dict[str, str]:
         data=data,
     )
 
-    relay_state, saml = map(lambda x: x[7:-3], re.findall(r'value=".*"/>', r.text)[:2])
+    relay_state, saml = map(
+        lambda x: x[7:-3], re.findall(r'value=".*"/>', r.text)[:2])
 
     ######
 
