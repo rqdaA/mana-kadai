@@ -6,6 +6,9 @@ import zoneinfo
 import traceback
 from datetime import datetime, timedelta
 from html import unescape
+from dotenv import load_dotenv
+
+load_dotenv()
 
 TOKEN = os.getenv("BOT_TOKEN", "")
 CHANNEL = int(os.getenv("CHANNEL", ""))
@@ -15,8 +18,7 @@ AUTH_URL = os.getenv("AUTH_URL", "")
 MANADA_URL = os.getenv("MANADA_URL", "")
 
 if not all(
-    [e for e in (TOKEN, CHANNEL, MANADA_USER,
-                 MANADA_PWD, AUTH_URL, MANADA_URL)]
+    [e for e in (TOKEN, CHANNEL, MANADA_USER, MANADA_PWD, AUTH_URL, MANADA_URL)]
 ):
     print("Not all variables are set")
     exit(1)
@@ -89,8 +91,7 @@ def get_shib() -> dict[str, str]:
         data=data,
     )
 
-    relay_state, saml = map(
-        lambda x: x[7:-3], re.findall(r'value=".*"/>', r.text)[:2])
+    relay_state, saml = map(lambda x: x[7:-3], re.findall(r'value=".*"/>', r.text)[:2])
 
     ######
 
