@@ -11,6 +11,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 TOKEN = os.getenv("BOT_TOKEN", "")
+VISUALIZER_TOKEN = os.getenv("VISUALIZER_TOKEN", "")
+VISUALIZER_URL = os.getenv("VISUALIZER_URL", "")
 CHANNEL = int(os.getenv("CHANNEL", ""))
 MANADA_USER = os.getenv("MANADA_USER", "")
 MANADA_PWD = os.getenv("MANADA_PWD", "")
@@ -18,7 +20,19 @@ AUTH_URL = os.getenv("AUTH_URL", "")
 MANADA_URL = os.getenv("MANADA_URL", "")
 
 if not all(
-    [e for e in (TOKEN, CHANNEL, MANADA_USER, MANADA_PWD, AUTH_URL, MANADA_URL)]
+    [
+        e
+        for e in (
+            TOKEN,
+            CHANNEL,
+            MANADA_USER,
+            MANADA_PWD,
+            AUTH_URL,
+            MANADA_URL,
+            VISUALIZER_TOKEN,
+            VISUALIZER_URL,
+        )
+    ]
 ):
     print("Not all variables are set")
     exit(1)
@@ -108,6 +122,11 @@ def get_shib() -> dict[str, str]:
     return {f"{shib_key}": s.cookies.get_dict()[shib_key]}
 
 
+def send_to_visualizer(dues):
+    headers = {"Authorization": f"Bearer {VISUALIZER_TOKEN}"}
+    requests.put(VISUALIZER_URL, headers=headers, json=dues)
+
+
 def get_messages() -> list[discord.Embed]:
     headers = {"User-Agent": UA}
 
@@ -120,13 +139,15 @@ def get_messages() -> list[discord.Embed]:
     )
 
     res = []
+    dues_iso = []
     for e in r.text.split("myassignments-title")[1:]:
         due = re.findall(r'td-period">(.*)</td>', e)
         priority = 0
         if not (due and len(due) >= 2 and due[1].startswith("202")):
             continue
-        due = datetime.strptime(f"{due[1].strip()} +09:00", f"{DUE_FORMAT} %z")
-        due_remain = due - datetime.now(tz=zoneinfo.ZoneInfo("Asia/Tokyo"))
+        due_iso = due[1].strip().replace(" ", "T")
+        due_readable = datetime.strptime(f"{due[1].strip()} +09:00", f"{DUE_FORMAT} %z")
+        due_remain = due_readable - datetime.now(tz=zoneinfo.ZoneInfo("Asia/Tokyo"))
 
         # overdue check
         if due_remain < timedelta(days=0):
@@ -153,16 +174,20 @@ def get_messages() -> list[discord.Embed]:
         embed.add_field(
             name="コース", value=course.group(1).replace("amp;", ""), inline=False
         )
-        embed.add_field(name="締切", value=due.strftime(DUE_FORMAT), inline=True)
+        embed.add_field(
+            name="締切", value=due_readable.strftime(DUE_FORMAT), inline=True
+        )
         embed.add_field(
             name="残り時間",
             value=f"{due_remain.days}d {due_remain.seconds // (60 * 60)}h {due_remain.seconds // 60 % 60}m",
             inline=True,
         )
         res.append(embed)
+        dues_iso.append({"name": name, "deadline": due_iso})
     if not res:
         embed = discord.Embed(title="直近の課題なし", color=NO_TASK)
         res.append(embed)
+    send_to_visualizer(dues_iso)
     return res
 
 
