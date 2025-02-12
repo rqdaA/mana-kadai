@@ -139,7 +139,7 @@ def get_messages() -> list[discord.Embed]:
     )
 
     res = []
-    dues_iso = []
+    dues = []
     for e in r.text.split("myassignments-title")[1:]:
         due = re.findall(r'td-period">(.*)</td>', e)
         priority = 0
@@ -168,12 +168,11 @@ def get_messages() -> list[discord.Embed]:
             continue
 
         url = f"{MANADA_URL}/ct/" + url_name.group(1)
-        name = url_name.group(2).replace("amp;", "")
+        title = url_name.group(2).replace("amp;", "")
+        course = course.group(1).replace("amp;", "")
         color = COLOR_LIST[priority]
-        embed = discord.Embed(title=name, url=url, color=color)
-        embed.add_field(
-            name="コース", value=course.group(1).replace("amp;", ""), inline=False
-        )
+        embed = discord.Embed(title=title, url=url, color=color)
+        embed.add_field(name="コース", value=course, inline=False)
         embed.add_field(
             name="締切", value=due_readable.strftime(DUE_FORMAT), inline=True
         )
@@ -183,11 +182,11 @@ def get_messages() -> list[discord.Embed]:
             inline=True,
         )
         res.append(embed)
-        dues_iso.append({"name": name, "deadline": due_iso})
+        dues.append({"title": title, "deadline": due_iso, "course": course})
     if not res:
         embed = discord.Embed(title="直近の課題なし", color=NO_TASK)
         res.append(embed)
-    send_to_visualizer(dues_iso)
+    send_to_visualizer(dues)
     return res
 
 
