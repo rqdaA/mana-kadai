@@ -155,9 +155,9 @@ def get_messages() -> list[discord.Embed]:
 
         if due_remain < timedelta(days=1):
             priority = 1
-        elif due_remain < timedelta(days=2):
-            priority = 2
         elif due_remain < timedelta(days=3):
+            priority = 2
+        elif due_remain < timedelta(days=7):
             priority = 3
         else:
             continue
