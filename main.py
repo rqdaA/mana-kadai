@@ -18,6 +18,7 @@ MANADA_USER = os.getenv("MANADA_USER", "")
 MANADA_PWD = os.getenv("MANADA_PWD", "")
 AUTH_URL = os.getenv("AUTH_URL", "")
 MANADA_URL = os.getenv("MANADA_URL", "")
+LOCK_FILE_PATH = "/tmp/manada.lock"
 
 if not all(
     [
@@ -183,9 +184,14 @@ def get_messages() -> list[discord.Embed]:
         )
         res.append(embed)
         dues.append({"title": title, "deadline": due_iso, "course": course})
-    if not res:
-        embed = discord.Embed(title="直近の課題なし", color=NO_TASK)
-        res.append(embed)
+    if res:
+        if os.path.isfile(LOCK_FILE_PATH):
+            os.remove(LOCK_FILE_PATH)
+    else:
+        if not os.path.isfile(LOCK_FILE_PATH):
+            embed = discord.Embed(title="直近の課題なし", color=NO_TASK)
+            res.append(embed)
+            open(LOCK_FILE_PATH, "r").close()
     send_to_visualizer(dues)
     return res
 
