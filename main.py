@@ -13,7 +13,7 @@ load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN", "")
 VISUALIZER_TOKEN = os.getenv("VISUALIZER_TOKEN", "")
 VISUALIZER_URL = os.getenv("VISUALIZER_URL", "")
-CHANNEL = int(os.getenv("CHANNEL", ""))
+CHANNELS = list(map(int, os.getenv("CHANNELS", "").split(' ')))
 MANADA_USER = os.getenv("MANADA_USER", "")
 MANADA_PWD = os.getenv("MANADA_PWD", "")
 AUTH_URL = os.getenv("AUTH_URL", "")
@@ -24,7 +24,7 @@ if not all(
         e
         for e in (
             TOKEN,
-            CHANNEL,
+            CHANNELS,
             MANADA_USER,
             MANADA_PWD,
             AUTH_URL,
@@ -190,13 +190,13 @@ def get_messages() -> list[discord.Embed]:
     return res
 
 
-def send_msg(msgs: list[discord.Embed]):
+def send_msg(msgs: list[discord.Embed], channel: int):
     client = discord.Client(intents=discord.Intents.default())
 
     @client.event
     async def on_ready():
         for msg in msgs:
-            await client.get_channel(CHANNEL).send(embed=msg)
+            await client.get_channel(channel).send(embed=msg)
         await client.close()
 
     client.run(TOKEN)
@@ -207,7 +207,8 @@ def send_err(msg: str):
 
     @client.event
     async def on_ready():
-        await client.get_channel(CHANNEL).send(f"```{msg}```")
+        for channel in CHANNELS:
+            await client.get_channel(channel).send(f"```{msg}```")
         await client.close()
 
     client.run(TOKEN)
@@ -216,6 +217,7 @@ def send_err(msg: str):
 if __name__ == "__main__":
     try:
         msg = get_messages()
-        send_msg(msg)
+        for channel in CHANNELS:
+            send_msg(msg, channel)
     except Exception:
         send_err(traceback.format_exc())
