@@ -188,10 +188,12 @@ def get_messages() -> list[discord.Embed]:
         if os.path.isfile(LOCK_FILE_PATH):
             os.remove(LOCK_FILE_PATH)
     else:
-        if not os.path.isfile(LOCK_FILE_PATH):
+        if os.path.isfile(LOCK_FILE_PATH):
+            return []
+        else:
             embed = discord.Embed(title="直近の課題なし", color=NO_TASK)
             res.append(embed)
-            open(LOCK_FILE_PATH, "r").close()
+            open(LOCK_FILE_PATH, "w").close()
     send_to_visualizer(dues)
     return res
 
@@ -223,6 +225,8 @@ def send_err(msg: str):
 if __name__ == "__main__":
     try:
         msg = get_messages()
+        if not msg:
+            exit(0)
         for channel in CHANNELS:
             send_msg(msg, channel)
     except Exception:
